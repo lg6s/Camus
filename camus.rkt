@@ -1,8 +1,6 @@
 #lang racket/base
 (require racket/string)
 (require racket/list)
-(require racket/cmdline)
-(require racket/port)
 
 ; camus
 
@@ -153,10 +151,3 @@
 (define (toHTML str)
   (toHTML-multi-stated (string-split str "\n") '()))
 
-#|
-(let* ((stemname (command-line #:args (filename) filename))
-       (fileport (open-input-file stemname #:mode 'text)))
-  (call-with-output-file
-    (string-append stemname ".html")
-    (λ (p) (display (toHTML (port->string fileport)) p))))
-|#
