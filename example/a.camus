@@ -1,0 +1,58 @@
+h1: Header 1
+h2: Header 2
+h3: Header 3
+h4: Header 4
+h5: Header 5
+h6: Header 6
+h6:This will not be rendered as a header |br||
+H6: And also this will not be rendered as a header
+
+p.
+This is a
+paragraph. 
+(There's a space in the end of the line above.)
+END.
+p: This is also a paragraph, but it only has a single line.
+This is an |p|inlined| paragraph
+
+This is |em|also| |p. an |strong|inlined| paragraph.|
+
+|LINK[This]|http://example.com|, is a link.
+|LINK[This]. http://example.com|, is also a link.
+LINK[This].
+http://example.com
+END.
+is not supported as a link.
+
+LINK[This]: http://example.com
+is a link. |br||
+
+p.
+Normal |em|emphasized| |strong|strong| |em. another emphasized |strong|emphasized strong| |strong. another emphasized strong|| normal
+|br||
+Normal |em|emphasized| |strong|strong| |em. |strong|emphasized strong|| normal
+|strong. |em|emphasized strong|| normal
+|strong. |em. emphasized strong|| normal
+END.
+em.
+emphasized
+END.
+|br||
+strong.
+strong
+END.
+|br||
+em.
+strong: emphasized strong
+END.
+
+p.
+NO-CAMUS.
+I'm escaping.
+
+h1: this will not be rendered as a header.
+h1.
+This will also not be rendered as a header.
+|em|this is of course not emphasized.|
+END.
+END.
