@@ -1,0 +1,80 @@
+html.
+ 
+head.
+meta[charset="utf-8"]:  
+title: Camus test file. 
+end[head].
+ 
+body.
+ 
+headers
+ 
+h1: H1 Header 
+h2: H2 Header 
+h3: H3 Header
+h4: H4 Header
+h5: H5 Header
+h6: H6 Header
+ 
+p: single line paragraph.
+p.
+multiple line
+paragraph
+end[p].
+ 
+another
+multiline
+paragraph.
+
+bold test. |b|bold| |strong|strong| |i|italic| test.
+ 
+stacking test. |b.  bold |strong|bold strong| bold| |strong. strong |b|bold| strong|.
+ 
+another stacking test. |i. italic |b|italic strong| italic| |strong. |i|strong italic| strong|
+ 
+imgtest! |img[src="./test.jpg"].  |
+ 
+href test! |a[href="https://bctnry.github.io/"].  bctnry on github|
+ 
+escaping test:
+h3: a h3 header
+h3\: not a h3 header
+
+a hr:
+hr.
+not a hr:
+hr\.
+
+a bold tag:
+|b|this is bold|
+
+not bold:
+\|b\|this is not bold|
+
+blockquote: singleline blockquote.
+blockquote.
+multiline  blockquote\.
+end[blockquote].
+
+
+force break: br|br||eak.
+or directly: br<br />eak.
+
+<pre>
+pre still functions as usual.
+but even in pre tag lines are affected by camus.
+e\.g\. |b|this| is still bold.
+</pre>
+
+the problem of printing &lt; and &gt;:<br />
+you just write them as usual.
+
+hr:  
+include test.
+
+INCLUDE[test2.cm]: 
+
+
+
+end[body].
+end[html].

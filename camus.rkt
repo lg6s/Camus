@@ -1,161 +1,189 @@
 #lang racket/base
 (require racket/string)
 (require racket/list)
+(require racket/file)
 
 ; camus
 
-(define blockLevelRegexp #rx"^(?:([^][.]*))(?:\\[(.*)\\])?\\.")
-(define lineLevelRegexp #rx"^(?:([^][:]+))(?:\\[(.*)\\])?: (.*)$")
-(define isDirectiveRegexp
-  #rx"^([ABCDEFGHIJKLMNOPQRSTUVWXYZ_]+.*)$")
-(define inlineTag-tier1-Regexp
-  #rx"^([^][|.\t ]+)(?:\\[(.*)\\])?\\. ")
-(define inlineTag-tier2-Regexp
-  #rx"^([^ \t|]+)\\|((?:&&|&\\||[^|])+)\\|(.*)")
-(define inlineTag-tier2-Regexp-noOutro
-  #rx"^([^ \t|]+)\\|((?:&&|&\\||[^|])+)\\|")
+(define normalTextRegexp_r "(?:[^][:\\\\.]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
+(define normalTextRegexp/nospc_r "(?:[^][:\\\\. ]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
+(define normalTextRegexp/ll_r "(?:[^][:\\\\]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
+(define tagTextRegexp/inline1_r "(?:[^ \\.|])")
+(define normalTextRegexp/inline1_r "(?:[^|]|\\\\\\|)")
+(define normalTextRegexp/inline2_r "(?:[^|]|\\\\\\|)")
+(define blockLevelRegexp_r
+  (string-append
+   "^(?:(" normalTextRegexp/nospc_r "+))"
+   "(?:\\[(" normalTextRegexp_r "*)\\])?"
+   "\\.([ \\\t]*)$"))
+(define lineLevelRegexp_r
+  (string-append
+   "^(?:(" normalTextRegexp/nospc_r "+))"
+   "(?:\\[(" normalTextRegexp/ll_r "*)\\])?"
+   ": (" normalTextRegexp/ll_r "*)([ \\\t]*)$"))
+(define blockLevelRegexp (regexp blockLevelRegexp_r))
+(define lineLevelRegexp (regexp lineLevelRegexp_r))
+(define isDirectiveRegexp #rx"^([ABCDEFGHIJKLMNOPQRSTUVWXYZ_]+.*)$")
+(define escapeRegexp #rx"\\\\([^\\\\])")
+(define inline2Regexp
+  (regexp
+   (string-append
+    "^\\|([^ |]+)\\|("
+    normalTextRegexp/inline2_r
+    "*)\\|")))
+(define inline1Regexp
+  (regexp (string-append
+           "^\\|(" tagTextRegexp/inline1_r "+)"
+           "(?:\\[(" normalTextRegexp/inline1_r "+)\\])?"
+           "\\. "
+           )))
 
-(define (isDirective? str) (regexp-match? isDirectiveRegexp str))
+(define tagname/blocklevel cadr)
+(define attribute/blocklevel caddr)
+(define tagname/linelevel cadr)
+(define attribute/linelevel caddr)
+(define content/linelevel cadddr)
+(define tagname/inline2 cadr)
+(define content/inline2 caddr)
+(define tagname/inline1 cadr)
+(define attribute/inline1 caddr)
+(define (length/inline1 matchres) (string-length (car matchres)))
+(define (length/inline2 matchres) (string-length (car matchres)))
 
-(define (getTagname-blockLevel matchres) (cadr matchres))
-(define (getAttribute-blockLevel matchres) (caddr matchres))
-(define (getTagname-lineLevel matchres) (cadr matchres))
-(define (getAttribute-lineLevel matchres) (caddr matchres))
-(define (getContent-lineLevel matchres) (cadddr matchres))
-(define (getTagname/inlineTag-tier2 matchres) (cadr matchres))
-(define (getContent/inlineTag-tier2 matchres) (caddr matchres))
-(define (getOutro/inlineTag-tier2 matchres) (cadddr matchres))
-(define (getTagname/inlineTag-tier1 matchres) (cadr matchres))
-(define (getAttr/inlineTag-tier1 matchres) (caddr matchres))
+(define (toHTML/escape str)
+  (regexp-replace* escapeRegexp str "\\1"))
+(define (toHTML/attribute attrstr)
+  (if attrstr
+      (string-append " " (regexp-replace* #rx"," (toHTML/escape attrstr) " "))
+      ""))
 
-(define (toHTML-attribute str)
-  (regexp-replace* #rx"," str " "))
+(define (toHTML/linelevel_r fstres)
+  (let* ((tagname (tagname/linelevel fstres))
+         (attribute (attribute/linelevel fstres))
+         (content (content/linelevel fstres))
+         (tagname_esc (toHTML/escape tagname)))
+  (string-append
+   "<" tagname_esc (toHTML/attribute attribute) ">"
+   content
+   "</" tagname_esc ">")))
+(define (toHTML/linelevel str)
+  (let ((parse-result (regexp-match lineLevelRegexp str)))
+    (if parse-result
+        (toHTML/linelevel_r parse-result)
+        #f)))
 
-(define (toHTML-Directive directiveType attr content)
-  (cond ((string=? directiveType "LINK")
-         (if content
-             (string-append "<a href=\"" attr "\">" content "</a>")
-             (string-append "<a href=\"" attr "\" />")))
-        ((string=? directiveType "IMG")
-         (if content
-             (string-append "<img src=\"" attr "\" alt=\"" content "\" />")
-             (string-append "<img src=\"" attr "\" />")))
-        ((string=? directiveType "NO-CAMUS")
-         content)
-        ))
-
-(define (countTier2Tag rst)
-  (define (countTier2Tag_ rst c pos)
-    (if (char=? (string-ref rst 0) #\|)
-        (if (= c 2) (+ pos 1)
-            (countTier2Tag_ (substring rst 1) (+ c 1) (+ 1 pos)))
-        (countTier2Tag_ (substring rst 1) c (+ 1 pos))))
-  (countTier2Tag_ rst 0 0))
-(define (splitContent-stated rst c c2)
-  (if (string=? rst "") #f
-      (let ((pivot (string-ref rst 0)))
-        (cond ((char=? pivot #\&) (splitContent-stated (substring rst 2) (+ c 2) c2))
-              ((char=? pivot #\|)
-               (let ((r (substring rst 1)))
-                 (cond ((regexp-match? inlineTag-tier2-Regexp r)
-                        (let ((count3res (countTier2Tag rst)))
-                          (splitContent-stated (substring rst count3res)
-                                               (+ c count3res)
-                                               c2)))
-                       ((regexp-match? inlineTag-tier1-Regexp r)
-                        (let ((l (string-length (car (regexp-match inlineTag-tier1-Regexp r)))))
-                          (splitContent-stated (substring rst l) (+ c l) (+ c2 1))))
-                       (#t
-                        (if (= c2 0) c
-                            (splitContent-stated (substring rst 1) (+ c 1) (- c2 1)))))))
-              (#t (splitContent-stated (substring rst 1) (+ c 1) c2))))))
-(define (splitContent rst)
-  (let ((splitPos (splitContent-stated rst 0 0)))
-    (if splitPos
-        (values (substring rst 0 splitPos) (substring rst (+ 1 splitPos)))
-        (values "" rst))))
-
-(define (toHTML-inline-stated str st)
+(define (toHTML/blocklevel_r fstres)
+  (let* ((tagname (tagname/blocklevel fstres))
+         (attribute (attribute/blocklevel fstres))
+         (tagname_esc (toHTML/escape tagname)))
+    (if (string=? tagname "end")
+        (string-append "\n</" (if attribute (toHTML/escape attribute) "") ">")
+        (string-append "\n<" tagname_esc (toHTML/attribute attribute) ">"))))
+(define (toHTML/blocklevel str)
+  (let ((parse-result (regexp-match blockLevelRegexp str)))
+    (if parse-result
+        (toHTML/blocklevel_r parse-result)
+        #f)))
+(define (toHTML/inline_i str res tagstack)
+  (if (string=? str "") res
+      (let ((pivot (string-ref str 0)))
+        (case pivot
+          ((#\\) (toHTML/inline_i
+                  (substring str 2)
+                  (string-append res (make-string 1 (string-ref str 1)))
+                  tagstack))
+          ((#\|)
+           (let ((inline2match (regexp-match inline2Regexp str))
+                 (inline1match (regexp-match inline1Regexp str)))
+             (cond (inline2match
+                    (let ((tagname (tagname/inline2 inline2match))
+                          (content (content/inline2 inline2match)))
+                      (toHTML/inline_i
+                       (substring str (length/inline2 inline2match))
+                       (string-append res "<" tagname ">" content "</" tagname ">")
+                       tagstack)))
+                   (inline1match
+                    (let ((tagname (tagname/inline1 inline1match))
+                          (attribute (attribute/inline1 inline1match)))
+                      (toHTML/inline_i
+                       (substring str (length/inline1 inline1match))
+                       (string-append
+                        res
+                        "<" tagname (toHTML/attribute attribute) ">")
+                       (cons (tagname/inline1 inline1match) tagstack))))
+                   (else
+                         (toHTML/inline_i
+                          (substring str 1)
+                          (string-append
+                           res
+                           (if (null? tagstack) "|"
+                               (string-append "</" (car tagstack) ">")))
+                          (if (null? tagstack) tagstack (cdr tagstack)))))))
+          (else
+                (toHTML/inline_i
+                 (substring str 1)
+                 (string-append res (make-string 1 (string-ref str 0)))
+                 tagstack))))))
+(define (toHTML/inline str)
+  (toHTML/inline_i str "" '()))
+(define (isTag? str) (or (toHTML/blocklevel str) (toHTML/linelevel str)))
+(define (toHTML/singl str) (or (toHTML/blocklevel str) (toHTML/linelevel str)))
+(define (appendstr/k str k) (λ (rststr) (string-append (k rststr) str)))
+(define (empty?/string str) (string=? (string-trim str) ""))
+(define (toHTML/linelevelp tagn)
   (cond
-    ((equal? st 'normal)
-     (cond
-       ((string=? str "") "")
-       ((char=? #\& (string-ref str 0))
-        (cond ((char=? #\& (string-ref str 1))
-               (string-append "&" (toHTML-inline-stated (substring str 2) st)))
-              ((char=? #\|
-                       (string-ref str 1))
-               (string-append "|" (toHTML-inline-stated (substring str 2) st)))))
-       ((char=? #\| (string-ref str 0))
-        (toHTML-inline-stated (substring str 1) 'tag))
-       (#t
-        (string-append (substring str 0 1)
-                       (toHTML-inline-stated (substring str 1) st)))))
-    #|
-    |sdfsf|sdfsfsfdsf|A -> |, sdfsf|sdfsfsfdsf|A -> sdfsf, sdfsfsfdsf, A
-    |A[B]. C|D -> |, A[B]. C|D -> A, B, C, D
-    |#
-    ((equal? st 'tag)
-     (cond ((regexp-match? inlineTag-tier2-Regexp str)
-            (let* ((matchres (regexp-match inlineTag-tier2-Regexp str))
-                   (tagname (getTagname/inlineTag-tier2 matchres))
-                   (content (getContent/inlineTag-tier2 matchres))
-                   (outro (getOutro/inlineTag-tier2 matchres)))
-              (if (isDirective? tagname)
-                  (string-append (toHTML-Directive tagname #f content)
-                                 (toHTML-inline-stated outro 'normal))
-                  (string-append
-                   "<" tagname ">" content "</" tagname ">"
-                   (toHTML-inline-stated outro 'normal)))))
-           ((regexp-match? inlineTag-tier1-Regexp str)
-            (let* ((matchres (regexp-match inlineTag-tier1-Regexp str))
-                   (tagname (getTagname/inlineTag-tier1 matchres))
-                   (attr (getAttr/inlineTag-tier1 matchres))
-                   (rst (substring str (string-length (car matchres)))))
-              (let-values (((content outro) (splitContent rst)))
-                (if (isDirective? tagname)
-                    (string-append (toHTML-Directive tagname attr content)
-                                   (toHTML-inline-stated outro 'normal))
-                    (string-append
-                     "<" tagname (if attr (string-append " " attr) "") ">"
-                     (toHTML-inline-stated content 'normal)
-                     "</" tagname ">"
-                     (toHTML-inline-stated outro 'normal)))
-                )))
-           (#t str)
-           ))))
-(define (toHTML-inline str)
-  (toHTML-inline-stated str 'normal))
-
-(define (toHTML-lineLevel str)
-  (if (regexp-match? lineLevelRegexp str)
-      (let* ((matchres (regexp-match lineLevelRegexp str))
-             (tagname (getTagname-lineLevel matchres))
-             (attribute (getAttribute-lineLevel matchres))
-             (content (getContent-lineLevel matchres)))
-        (if (isDirective? tagname)
-            (toHTML-Directive tagname attribute content)
-            (string-append
-             "<" tagname (if attribute (string-append " " attribute) "") ">"
-             (toHTML-inline content) "</" tagname ">")))
-      (toHTML-inline str)))
-
-(define (toHTML-blockLevel strlist st)
-  (cond ((null? strlist) "\n")
-        ((string=? (car strlist) "END.")
-         (string-append
-          "</" (car st) ">\n"
-          (toHTML-blockLevel (cdr strlist) (cdr st))))
-        ((regexp-match? blockLevelRegexp (car strlist))
-         (let* ((matchres (regexp-match blockLevelRegexp (car strlist)))
-                (tagname (getTagname-blockLevel matchres))
-                (attribute (getAttribute-blockLevel matchres)))
-           (string-append
-            "<" tagname
-            (if attribute (string-append " " (toHTML-attribute attribute)) "")
-            ">\n" (toHTML-blockLevel (cdr strlist) (cons tagname st)))))
-        (#T (string-append (toHTML-lineLevel (car strlist)) "\n"
-                           (toHTML-blockLevel (cdr strlist) st)))))
-
+    ((string=? tagn "INCLUDE")
+     (λ (fstres strl k)
+       (toHTML/strlist_k
+        (append
+         (string-split (file->string (attribute/linelevel fstres)) "\n")
+         (cdr strl))
+        k))
+     )
+    (else
+     (λ (fstres strl k)
+       (toHTML/strlist_k
+        (cdr strl)
+        (appendstr/k (toHTML/linelevel (car fstres)) k))))))
+(define (toHTML/strlist_k strl k)
+  (if (null? strl) (k "")
+      (let ([fst (car strl)] [rst (cdr strl)])
+        (let ([fstres/blocklevel_r (regexp-match blockLevelRegexp fst)]
+              [fstres/linelevel_r (regexp-match lineLevelRegexp fst)])
+          (cond
+            (fstres/blocklevel_r
+             (toHTML/strlist_k rst (appendstr/k (toHTML/blocklevel_r fstres/blocklevel_r) k)))
+            (fstres/linelevel_r
+             ((toHTML/linelevelp (tagname/linelevel fstres/linelevel_r)) 
+              fstres/linelevel_r strl k))
+            (else
+             (let-values
+                 ([(paragraph afterp)
+                   (splitf-at rst (λ (x) (and (not (isTag? x))
+                                               (not (empty?/string x)))))])
+               (toHTML/strlist_k
+                afterp
+                (appendstr/k
+                 (string-append
+                  "<p>\n"
+                  (apply string-append
+                         (map (λ (s) (string-append (toHTML/inline s) "\n"))
+                              (if (empty?/string fst) paragraph (cons fst paragraph))))
+                  "</p>\n")
+                 k)))))))))
 (define (toHTML str)
-  (toHTML-blockLevel (string-split str "\n") '()))
+  (toHTML/strlist_k (string-split str "\n") (λ (x) x)))
+#|
+
+"sdfsdf|b.  |strong|d|c|s|afj|dsf|dfds "
+|b. controls the longest distance.
+|img[src="./test.jpg
+
+|#
+
+(displayln "Camus v0.1 beta\nplz input filename.")
+(let* ((filename (symbol->string (read)))
+       (outputfilename (string-append filename ".html"))
+       (filecontent (file->string filename)))
+  (with-output-to-file outputfilename
+    (λ () (displayln (toHTML filecontent)))))
