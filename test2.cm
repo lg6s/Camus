@@ -1,3 +1,3 @@
 h3: this is a h3 header in test2. 
-INCLUDE[test3.cm]:  
+INCLUDE[test3.cm]:  This is test3.cm.
 

@@ -72,7 +72,7 @@ you just write them as usual.
 hr:  
 include test.
 
-INCLUDE[test2.cm]: 
+INCLUDE[test2.cm]: This is test2.cm.
 
 
 

@@ -50,6 +50,8 @@
 (define (length/inline1 matchres) (string-length (car matchres)))
 (define (length/inline2 matchres) (string-length (car matchres)))
 
+(define flag/noInclude #f)
+
 (define (toHTML/escape str)
   (regexp-replace* escapeRegexp str "\\1"))
 (define (toHTML/attribute attrstr)
@@ -134,11 +136,23 @@
   (cond
     ((string=? tagn "INCLUDE")
      (λ (fstres strl k)
-       (toHTML/strlist_k
-        (append
-         (string-split (file->string (attribute/linelevel fstres)) "\n")
-         (cdr strl))
-        k))
+       (if flag/noInclude
+           (begin
+             (toHTML/file (attribute/linelevel fstres))
+             (toHTML/strlist_k
+              (cdr strl)
+              (appendstr/k
+               (string-append
+                "<a href=\"" (attribute/linelevel fstres) ".html\">"
+                (content/linelevel fstres)
+                "</a>\n")
+               k)))
+           (toHTML/strlist_k
+            (append
+             (string-split (file->string (attribute/linelevel fstres)) "\n")
+             (cdr strl))
+            k))
+       )
      )
     (else
      (λ (fstres strl k)
@@ -173,6 +187,12 @@
                  k)))))))))
 (define (toHTML str)
   (toHTML/strlist_k (string-split str "\n") (λ (x) x)))
+(define (toHTML/file filename)
+  (let ((outputfilename (string-append filename ".html"))
+        (filecontent (file->string filename)))
+    (with-output-to-file outputfilename
+      (λ () (displayln (toHTML filecontent)))
+      #:exists 'replace)))
 #|
 
 "sdfsdf|b.  |strong|d|c|s|afj|dsf|dfds "
@@ -181,9 +201,15 @@
 
 |#
 
-(displayln "Camus v0.1 beta\nplz input filename.")
+(displayln "Camus v0.1 beta\nplz input file name.")
 (let* ((filename (symbol->string (read)))
        (outputfilename (string-append filename ".html"))
        (filecontent (file->string filename)))
-  (with-output-to-file outputfilename
-    (λ () (displayln (toHTML filecontent)))))
+  (begin
+    (displayln "no include? [\"yes\" for not doing include; \"no\" for the opposite]")
+    (let ((noinclude (read)))
+      (when (equal? noinclude 'yes)
+        (begin
+            (set! flag/noInclude #t)
+            (displayln "INCLUDE directive will now be processed into <a> links."))))
+    (toHTML/file filename)))
