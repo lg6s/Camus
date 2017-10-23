@@ -1,0 +1,31 @@
+html.
+
+head.
+meta[charset="utf-8"]:  
+title: Camus | yet another markup language
+end[head].
+
+body.
+
+h3: Camus | yet another markup language.
+hr: 
+
+Compile\: you might need |a[href="http://racket-lang.org/"]. Racket| 6.8+\.<br />
+How to use it\: see |a[href="https://github.com/bctnry/Camus/blob/master/test.cm"]. test.cm|<br />
+References\: under construction.<br />
+
+Fork me on |a[href="https://github.com/bctnry/Camus/"]. github|.
+
+&copy;bctnry 2017
+
+hr: 
+
+div[style="font-size\:85%"].
+
+This page is generated with |a[href="https://github.com/bctnry/Camus/"]. Camus| v0.1 beta.
+
+end[div].
+
+end[body].
+
+end[html].
