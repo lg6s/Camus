@@ -6,7 +6,7 @@
 
 ; camus-core
 
-
+#|
 (define flags/toHTML
   '((noInclude . #f)))
 (define (getflag/toHTML flagn)  (cdr (assoc flagn flags/toHTML)))
@@ -16,25 +16,28 @@
     (set! flags/toHTML (append before (cons (cons flagn val) (cdr after))))))
 (define (extflag/toHTML flagn) (set! flags/toHTML (cons (cons flagn #f) flags/toHTML)))
 
+|#
+
 (define linelevelp/toHTML
   `(("INCLUDE" .
      ,(λ (fstres strl k)
-       (if (flagset?/toHTML 'noInclude)
-           (begin
-             (toHTML/file (attribute/linelevel fstres))
-             (toHTML/strlist_k
-              (cdr strl)
-              (appendstr/k
-               (string-append
-                "<a href=\"" (attribute/linelevel fstres) ".html\">"
-                (content/linelevel fstres)
-                "</a>\n")
-               k)))
-           (toHTML/strlist_k
-            (append
-             (string-split (file->string (attribute/linelevel fstres)) "\n")
-             (cdr strl))
-            k))))
+        (toHTML/strlist_k
+         (append
+          (string-split (file->string (attribute/linelevel fstres)) "\n")
+          (cdr strl))
+         k)))
+    ("LINK" .
+     ,(λ (fstres strl k)
+        (begin
+          (toHTML/file (attribute/linelevel fstres))
+          (toHTML/strlist_k
+           (cdr strl)
+           (appendstr/k
+            (string-append
+             "<a href=\"" (attribute/linelevel fstres) ".html\">"
+             (content/linelevel fstres)
+             "</a>\n")
+            k)))))
     (DEFAULT .
        ,(λ (fstres strl k)
          (toHTML/strlist_k
@@ -43,6 +46,31 @@
     ))
 (define (getlinelevelp/toHTML tagn)
   (assoc tagn linelevelp/toHTML))
+
+
+(define inlinep/toHTML
+  `(("LINK" .
+     ,(λ (fstres str res tagstack)
+        (begin
+          (toHTML/file (attribute/inline1 fstres))
+          (toHTML/inline_i
+           (substring str (length/inline1 fstres))
+           (string-append
+            res
+            "<a href=\"" (attribute/inline1 fstres) ".html\">")
+           (cons "a" tagstack)))))
+    (DEFAULT .
+      ,(λ (fstres str res tagstack)
+         (toHTML/inline_i
+          (substring str (length/inline1 fstres))
+          (string-append
+           res
+           "<" (tagname/inline1 fstres)
+           (toHTML/attribute (attribute/inline1 fstres)) ">")
+          (cons (tagname/inline1 fstres) tagstack))))
+    ))
+(define (getinlinep/toHTML tagn)
+  (assoc tagn inlinep/toHTML))
 
 ;  --------------------------------------------------------------------------
 
@@ -125,6 +153,14 @@
     (if parse-result
         (toHTML/blocklevel_r parse-result)
         #f)))
+
+
+; ---------------------------------------------------
+
+(define (toHTML/inlinep tagn)
+  (let ((assocres (getinlinep/toHTML tagn)))
+    (if assocres (cdr assocres) (cdr (getinlinep/toHTML 'DEFAULT)))))
+
 (define (toHTML/inline_i str res tagstack)
   (if (string=? str "") res
       (let ((pivot (string-ref str 0)))
@@ -144,14 +180,8 @@
                        (string-append res "<" tagname ">" content "</" tagname ">")
                        tagstack)))
                    (inline1match
-                    (let ((tagname (tagname/inline1 inline1match))
-                          (attribute (attribute/inline1 inline1match)))
-                      (toHTML/inline_i
-                       (substring str (length/inline1 inline1match))
-                       (string-append
-                        res
-                        "<" tagname (toHTML/attribute attribute) ">")
-                       (cons (tagname/inline1 inline1match) tagstack))))
+                    ((toHTML/inlinep (tagname/inline1 inline1match))
+                     inline1match str res tagstack))
                    (else
                          (toHTML/inline_i
                           (substring str 1)
@@ -171,6 +201,9 @@
 (define (toHTML/singl str) (or (toHTML/blocklevel str) (toHTML/linelevel str)))
 (define (appendstr/k str k) (λ (rststr) (string-append (k rststr) str)))
 (define (empty?/string str) (string=? (string-trim str) ""))
+
+
+;--------------------------------------------------
 
 
 (define (toHTML/linelevelp tagn)

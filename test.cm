@@ -74,6 +74,9 @@ include test.
 
 INCLUDE[test2.cm]: This is test2.cm.
 
+LINK[test2.cm]: This is a link to test2.cm.
+
+|LINK[test2.cm]. this| is also a link to test2.cm.
 
 
 end[body].
