@@ -38,6 +38,26 @@
              (content/linelevel fstres)
              "</a>\n")
             k)))))
+    ("REFER" .
+     ,(λ (fstres strl k)
+        (toHTML/strlist_k
+         (cdr strl)
+         (appendstr/k
+          (string-append
+           "<a href=\"#" (attribute/linelevel fstres) "\">"
+           (content/linelevel fstres)
+           "</a>\n")
+          k))))
+    ("LABEL" .
+     ,(λ (fstres strl k)
+        (toHTML/strlist_k
+         (cdr strl)
+         (appendstr/k
+          (string-append
+           "<a name=\"" (attribute/linelevel fstres) "\">"
+           (content/linelevel fstres)
+           "</a>\n")
+          k))))
     (DEFAULT .
        ,(λ (fstres strl k)
          (toHTML/strlist_k
@@ -59,6 +79,22 @@
             res
             "<a href=\"" (attribute/inline1 fstres) ".html\">")
            (cons "a" tagstack)))))
+    ("REFER" .
+     ,(λ (fstres str res tagstack)
+        (toHTML/inline_i
+         (substring str (length/inline1 fstres))
+         (string-append
+          res
+          "<a href=\"#" (attribute/inline1 fstres) "\">")
+         (cons "a" tagstack))))
+    ("LABEL" .
+     ,(λ (fstres str res tagstack)
+        (toHTML/inline_i
+         (substring str (length/inline1 fstres))
+         (string-append
+          res
+          "<a name=\"#" (attribute/inline1 fstres) "\">")
+         (cons "a" tagstack))))   
     (DEFAULT .
       ,(λ (fstres str res tagstack)
          (toHTML/inline_i
@@ -77,7 +113,7 @@
 (define normalTextRegexp_r "(?:[^][:\\\\.]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
 (define normalTextRegexp/nospc_r "(?:[^][:\\\\. ]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
 (define normalTextRegexp/ll_r "(?:[^][:\\\\]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
-(define tagTextRegexp/inline1_r "(?:[^ \\.|])")
+(define tagTextRegexp/inline1_r "(?:[^][ \\.|])")
 (define normalTextRegexp/inline1_r "(?:[^|]|\\\\\\|)")
 (define normalTextRegexp/inline2_r "(?:[^|]|\\\\\\|)")
 (define blockLevelRegexp_r
