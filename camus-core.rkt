@@ -55,14 +55,15 @@
          (appendstr/k
           (string-append
            "<a name=\"" (attribute/linelevel fstres) "\">"
-           (content/linelevel fstres)
+           (toHTML/inline (content/linelevel fstres))
            "</a>\n")
           k))))
     (DEFAULT .
        ,(λ (fstres strl k)
          (toHTML/strlist_k
           (cdr strl)
-          (appendstr/k (toHTML/linelevel (car fstres)) k))))
+          (appendstr/k
+           (toHTML/linelevel (car fstres)) k))))
     ))
 (define (getlinelevelp/toHTML tagn)
   (assoc tagn linelevelp/toHTML))
@@ -93,7 +94,7 @@
          (substring str (length/inline1 fstres))
          (string-append
           res
-          "<a name=\"#" (attribute/inline1 fstres) "\">")
+          "<a name=\"" (attribute/inline1 fstres) "\">")
          (cons "a" tagstack))))   
     (DEFAULT .
       ,(λ (fstres str res tagstack)
@@ -112,7 +113,8 @@
 
 (define normalTextRegexp_r "(?:[^][:\\\\.]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
 (define normalTextRegexp/nospc_r "(?:[^][:\\\\. ]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
-(define normalTextRegexp/ll_r "(?:[^][:\\\\]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
+(define normalTextRegexp/llattr_r "(?:[^][:\\\\]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
+(define normalTextRegexp/ll_r "(?:.)")
 (define tagTextRegexp/inline1_r "(?:[^][ \\.|])")
 (define normalTextRegexp/inline1_r "(?:[^|]|\\\\\\|)")
 (define normalTextRegexp/inline2_r "(?:[^|]|\\\\\\|)")
@@ -124,7 +126,7 @@
 (define lineLevelRegexp_r
   (string-append
    "^(?:(" normalTextRegexp/nospc_r "+))"
-   "(?:\\[(" normalTextRegexp/ll_r "*)\\])?"
+   "(?:\\[(" normalTextRegexp/llattr_r "*)\\])?"
    ": (" normalTextRegexp/ll_r "*)([ \\\t]*)$"))
 (define blockLevelRegexp (regexp blockLevelRegexp_r))
 (define lineLevelRegexp (regexp lineLevelRegexp_r))
@@ -169,7 +171,7 @@
          (tagname_esc (toHTML/escape tagname)))
   (string-append
    "<" tagname_esc (toHTML/attribute attribute) ">"
-   content
+   (toHTML/inline content)
    "</" tagname_esc ">")))
 (define (toHTML/linelevel str)
   (let ((parse-result (regexp-match lineLevelRegexp str)))
