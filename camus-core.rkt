@@ -18,93 +18,77 @@
 
 |#
 
+(define (mkLineLevelP/toHTML name f)
+  (cons name
+        (λ (fstres strl k)
+          (let-values (((result reststrl) (f fstres strl)))
+            (toHTML/strlist_k
+             reststrl
+             (appendstr/k result k))))))
 (define linelevelp/toHTML
-  `(("INCLUDE" .
-     ,(λ (fstres strl k)
-        (toHTML/strlist_k
-         (append
-          (string-split (file->string (attribute/linelevel fstres)) "\n")
-          (cdr strl))
-         k)))
-    ("LINK" .
-     ,(λ (fstres strl k)
-        (begin
-          (toHTML/file (attribute/linelevel fstres))
-          (toHTML/strlist_k
-           (cdr strl)
-           (appendstr/k
-            (string-append
-             "<a href=\"" (attribute/linelevel fstres) ".html\">"
-             (content/linelevel fstres)
-             "</a>\n")
-            k)))))
-    ("REFER" .
-     ,(λ (fstres strl k)
-        (toHTML/strlist_k
-         (cdr strl)
-         (appendstr/k
-          (string-append
-           "<a href=\"#" (attribute/linelevel fstres) "\">"
-           (content/linelevel fstres)
-           "</a>\n")
-          k))))
-    ("LABEL" .
-     ,(λ (fstres strl k)
-        (toHTML/strlist_k
-         (cdr strl)
-         (appendstr/k
-          (string-append
-           "<a name=\"" (attribute/linelevel fstres) "\">"
-           (toHTML/inline (content/linelevel fstres))
-           "</a>\n")
-          k))))
-    (DEFAULT .
-       ,(λ (fstres strl k)
-         (toHTML/strlist_k
-          (cdr strl)
-          (appendstr/k
-           (toHTML/linelevel (car fstres)) k))))
+  `(,(mkLineLevelP/toHTML "INCLUDE"
+      (λ (fstres strl)
+        (values ""
+                (append
+                 (string-split (file->string (attribute/linelevel fstres)) "\n")
+                 (cdr strl)))))
+    ,(mkLineLevelP/toHTML "LINK"
+      (λ (fstres strl)
+        (toHTML/file (attribute/linelevel fstres))
+        (values (string-append "<a href=\"" (attribute/linelevel fstres) ".html\">"
+                               (content/linelevel fstres)
+                               "</a>\n")
+                (cdr strl))))
+    ,(mkLineLevelP/toHTML "REFER"
+      (λ (fstres strl)
+        (values (string-append "<a href=\"#" (attribute/linelevel fstres) "\">"
+                               (content/linelevel fstres)
+                               "</a>\n")
+                (cdr strl))))
+    ,(mkLineLevelP/toHTML "LABEL"
+      (λ (fstres strl)
+        (values (string-append
+                 "<a name=\"" (attribute/linelevel fstres) "\">"
+                 (toHTML/inline (content/linelevel fstres))
+                 "</a>\n")
+                (cdr strl))))
+    ,(mkLineLevelP/toHTML 'DEFAULT
+      (λ (fstres strl)
+        (values (toHTML/linelevel (car fstres))
+                (cdr strl))))
     ))
 (define (getlinelevelp/toHTML tagn)
   (assoc tagn linelevelp/toHTML))
 
 
+(define (mkInlineP/toHTML name f)
+  (cons name
+        (λ (fstres str res tagstack)
+          (let-values (((result nexttagstack) (f fstres tagstack)))
+            (toHTML/inline_i
+             (substring str (length/inline1 fstres))
+             (string-append res result)
+             nexttagstack)))))
 (define inlinep/toHTML
-  `(("LINK" .
-     ,(λ (fstres str res tagstack)
-        (begin
-          (toHTML/file (attribute/inline1 fstres))
-          (toHTML/inline_i
-           (substring str (length/inline1 fstres))
-           (string-append
-            res
-            "<a href=\"" (attribute/inline1 fstres) ".html\">")
-           (cons "a" tagstack)))))
-    ("REFER" .
-     ,(λ (fstres str res tagstack)
-        (toHTML/inline_i
-         (substring str (length/inline1 fstres))
-         (string-append
-          res
-          "<a href=\"#" (attribute/inline1 fstres) "\">")
-         (cons "a" tagstack))))
-    ("LABEL" .
-     ,(λ (fstres str res tagstack)
-        (toHTML/inline_i
-         (substring str (length/inline1 fstres))
-         (string-append
-          res
-          "<a name=\"" (attribute/inline1 fstres) "\">")
-         (cons "a" tagstack))))   
-    (DEFAULT .
-      ,(λ (fstres str res tagstack)
-         (toHTML/inline_i
-          (substring str (length/inline1 fstres))
-          (string-append
-           res
-           "<" (tagname/inline1 fstres)
-           (toHTML/attribute (attribute/inline1 fstres)) ">")
-          (cons (tagname/inline1 fstres) tagstack))))
+  `(
+    ,(mkInlineP/toHTML "LINK"
+      (λ (fstres tagstack)
+        (toHTML/file (attribute/inline1 fstres))
+        (values (string-append "<a href=\"" (attribute/inline1 fstres) ".html\">")
+                (cons "a" tagstack))))
+    ,(mkInlineP/toHTML "REFER"
+      (λ (fstres tagstack)
+        (values (string-append "<a href=\"#" (attribute/inline1 fstres) "\">")
+                (cons "a" tagstack))))
+    ,(mkInlineP/toHTML "LABEL"
+      (λ (fstres tagstack)
+        (values (string-append "<a name=\"" (attribute/inline1 fstres) "\">")
+                (cons "a" tagstack))))
+    ,(mkInlineP/toHTML 'DEFAULT
+      (λ (fstres tagstack)
+        (values (string-append "<" (tagname/inline1 fstres)
+                               (toHTML/attribute (attribute/inline1 fstres)) ">")
+                (cons (tagname/inline1 fstres) tagstack))))
     ))
 (define (getinlinep/toHTML tagn)
   (assoc tagn inlinep/toHTML))

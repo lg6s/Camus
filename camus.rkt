@@ -7,7 +7,7 @@
 ; camus
 
 (define (main)
-  (displayln "Camus v0.1 beta\nplz input file name.")
+  (displayln "Camus v0.1 beta 20171030\nplz input file name.")
   (let* ((filename (symbol->string (read)))
          (outputfilename (string-append filename ".html"))
          (filecontent (file->string filename)))
