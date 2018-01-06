@@ -1,0 +1,52 @@
+h1: this is a title.
+h2: heading2.
+h3: heading3.
+h4: heading4.
+h5: heading5.
+h6: heading6.
+block-level tag is different
+p[style="font-size:80%"]{
+    this is a test.
+    |b|line-level tags still works|
+    |b[id="a-bold-tag"]. this kind of tags still works|
+}
+
+now we have a different kind of include:
+INCLUDE: your-file-name-here.cm
+link still works
+LINK[your-file-name-here.cm]: your link name here.
+but it's actually a shorthand for:
+a[href="your-file-name-here.cm"]: your link name here.
+to link to a camus file you need to do:
+LINK_CM[your-file-name-here.cm]: your link name here.
+now LINK does not recursively build the html for you. if you really need to do so, use LINK_FOLLOW:
+LINK_FOLLOW[your-file-name-here.cm]: your link name here.
+
+LABEL and REFER still works as usual. but now you can use them as a type-1 line-level tag:
+|LABEL|test| will become <a name="test">test</a>
+|REFER|test| will become <a href="#test">test</a>
+
+escaping still works the same:
+|LABEL|test| <- this is a label.
+\|LABEL|test| <- this is not a label.
+
+block-level tag prefixes:
+prefix:prefix-val,prefix:prefix-val,....,tag[tag attribute]{
+  tag content
+}
+
+new directives that control the output of the compiler!
+1. customizable conversions
+e.g.
+CONV: (c),&copy;
+now writing (c)2017 is the same as writing &copy;2017
+CONVT: converting-table-filename.csv
+
+STYLESHEET: css-file-name.
+and now you can:
+STYLE:class-name,<tag>
+this will turn into:
+<tag class="class-name">
+
+
+
