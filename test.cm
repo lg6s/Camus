@@ -1,21 +1,15 @@
 html.
- 
 head.
 meta[charset="utf-8"]:  
 title: Camus test file. 
 end[head].
- 
 body.
-
 
 |REFER[a_label]. headers|<br />
 ^ click me!
 
 h1: Camus Markup Language
-
 hr.
-
- 
 h1: H1 Header 
 h2: H2 Header 
 h3: H3 Header
@@ -28,17 +22,16 @@ p.
 multiple line
 paragraph
 end[p].
- 
 another
 multiline
 paragraph\.
 
 bold test. |b|bold| |strong|strong| |i|italic| test.
- 
+
 stacking test. |b.  bold |strong|bold strong| bold| |strong. strong |b|bold| strong|.
- 
+
 another stacking test. |i. italic |b|italic strong| italic| |strong. |i|strong italic| strong|
- 
+
 imgtest! |img[src="./test.jpg"].  |
  
 href test! |a[href="https://bctnry.github.io/"].  bctnry on github|
@@ -63,7 +56,6 @@ blockquote.
 multiline  blockquote.
 end[blockquote].
 
-
 force break: br|br||eak.
 or directly: br<br />eak.
 
@@ -72,9 +64,9 @@ pre still functions as usual.
 but even in pre tag lines are affected by camus.
 e\.g\. |b|this| is still bold.
 </pre>
-
 the problem of printing &lt; and &gt;:<br />
 you just write them as usual.
+
 
 hr:  
 include test.
@@ -101,16 +93,14 @@ li: LINK[X], where X will be processed.
 li: LINK-RAW[X], which works as a simple &lt;a&gt; tag.
 end[ul].
 
-
 LINK[test2.cm]: This is a link to the file generated from test2.cm.
 
 |LINK[test2.cm]. this| is also a link to the file generated from test2.cm.
 
 LINK-RAW[test2.cm]: This is a link to test2.cm.
 
-hr:  
 
-
+hr.
 h3: v0.1 beta 20171030: REFER and LABEL
 you might not notice them. click |REFER[top]. here|. <br />
 |LABEL[a_label]. now you're back here again.|
@@ -127,8 +117,18 @@ h3: this word is bold (normally), but this |i|word| is italic.
 
 hr.
 h3: v20180710: INCLUDE-RAW and LINK-RAW
-
-The looping reference bug is also fixed. check out loopref-test.cm.
+ul.
+li: The looping reference bug is also fixed. check out loopref-test.cm.
+li.
+The rules for empty lines has also changed: there will be no implicit &lt;p&gt; tags,
+one empty line is converted to one &lt;br /&gt;, and 2 or more than 2 empty lines are converted to two br tags.
+end[li].
+li: block-level attributes are now supported.
+end[ul].
+block-level tag attributes.
+div[style="font-size:80%",id="test"].
+block-level attribute test.
+end[div].
 
 end[body].
 end[html].

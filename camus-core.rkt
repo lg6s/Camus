@@ -119,6 +119,7 @@
 ;  --------------------------------------------------------------------------
 
 (define normalTextRegexp_r "(?:[^][:\\\\.]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
+(define normalTextRegexp/blockattr_r ".")
 (define normalTextRegexp/nospc_r "(?:[^][:\\\\. ]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
 (define normalTextRegexp/llattr_r "(?:[^][:\\\\]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
 (define normalTextRegexp/ll_r "(?:.)")
@@ -128,7 +129,7 @@
 (define blockLevelRegexp_r
   (string-append
    "^(?:(" normalTextRegexp/nospc_r "+))"
-   "(?:\\[(" normalTextRegexp_r "*)\\])?"
+   "(?:\\[(" normalTextRegexp/blockattr_r "*)\\])?"
    "\\.([ \\\t]*)$"))
 (define lineLevelRegexp_r
   (string-append
@@ -266,21 +267,13 @@
             (fstres/linelevel_r
              ((toHTML/linelevelp (tagname/linelevel fstres/linelevel_r)) 
               fstres/linelevel_r strl k))
+            ((empty?/string fst)
+             (let-values (((empty-lines rst) (splitf-at strl empty?/string)))
+               (toHTML/strlist_k rst (appendstr/k (if (= 1 (length empty-lines)) "<br />" "<br /><br />") k))))
             (else
-             (let-values
-                 ([(paragraph afterp)
-                   (splitf-at rst (λ (x) (and (not (isTag? x))
-                                               (not (empty?/string x)))))])
-               (toHTML/strlist_k
-                afterp
-                (appendstr/k
-                 (string-append
-                  "<p>\n"
-                  (apply string-append
-                         (map (λ (s) (string-append (toHTML/inline s) "\n"))
-                              (if (empty?/string fst) paragraph (cons fst paragraph))))
-                  "</p>\n")
-                 k)))))))))
+             (toHTML/strlist_k
+              rst
+              (appendstr/k (string-append (toHTML/inline fst) "\n") k))))))))
 (define (toHTML str)
   (toHTML/strlist_k (string-split str "\n") (λ (x) x)))
 (define (toHTML/file filename)
