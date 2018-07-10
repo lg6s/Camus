@@ -7,8 +7,17 @@
 </p>
 
 <body><p>
+</p>
+<p>
 <a href="#a_label">headers</a><br />
 ^ click me!
+</p>
+<p>
+</p>
+<h1>Camus Markup Language</h1><p>
+</p>
+
+<hr><p>
 </p>
 <p>
 </p>
@@ -23,9 +32,9 @@ paragraph
 </p><p>
 another
 multiline
+paragraph.
 </p>
-
-<paragraph><p>
+<p>
 bold test. <b>bold</b> <strong>strong</strong> <i>italic</i> test.
 </p>
 <p>
@@ -92,21 +101,54 @@ you just write them as usual.
 include test.
 </p>
 <p>
+there are 2 kind of INCLUDE:
+</p>
+
+<ul><li>INCLUDE[X], where X will be processed by camus.</li><li>INCLUDE-RAW[X], where X will not be processed.</li><p>
+</p>
+
+</ul><p>
+example:
+</p>
+<p>
 </p>
 <h3>this is a h3 header in test2. </h3><p>
 <b>bold</b> 
 </p>
 <p>
 </p>
+h3: this is a h3 header in test2. 
+INCLUDE[test3.cm]:  This is test3.cm.
+
 <p>
 </p>
-<a href="test2.cm.html">This is a link to test2.cm.</a>
-<p>
-<a href="test2.cm.html">this</a> is also a link to test2.cm.
+
+<hr><p>
+link test.
 </p>
+<p>
+there are 2 kinds of LINK:
+</p>
+<p>
+</p>
+
+<ul><li>LINK[X], where X will be processed.</li><li>LINK-RAW[X], which works as a simple &lt;a&gt; tag.</li>
+</ul><p>
+</p>
+<p>
+</p>
+<a href="test2.cm.html">This is a link to the file generated from test2.cm.</a>
+<p>
+<a href="test2.cm.html">this</a> is also a link to the file generated from test2.cm.
+</p>
+<p>
+</p>
+<a href="test2.cm">This is a link to test2.cm.</a>
 <p>
 </p>
 <hr> </hr><p>
+</p>
+<p>
 </p>
 <h3>v0.1 beta 20171030: REFER and LABEL</h3><p>
 you might not notice them. click <a href="#top">here</a>. <br />
@@ -126,6 +168,10 @@ btw you can use tags like this now:
 <p>
 </p>
 <h3>this word is bold (normally), but this <i>word</i> is italic.</h3><p>
+</p>
+
+<hr><h3>v20180710: INCLUDE-RAW and LINK-RAW</h3><p>
+The looping reference bug is also fixed. check out loopref-test.cm.
 </p>
 <p>
 </p>

@@ -18,6 +18,13 @@
 
 |#
 
+;; this is to prevent loops.
+(define *working-set* '())
+(define (inWorkingSet filename)
+  (for/or ([i (in-list *working-set*)]) (string=? filename i)))
+(define (regWorkingSet filename)
+  (set! *working-set* (cons filename *working-set*)))
+
 (define (mkLineLevelP/toHTML name f)
   (cons name
         (λ (fstres strl k)
@@ -32,10 +39,26 @@
                 (append
                  (string-split (file->string (attribute/linelevel fstres)) "\n")
                  (cdr strl)))))
-    ,(mkLineLevelP/toHTML "LINK"
+    ,(mkLineLevelP/toHTML
+      "LINK"
       (λ (fstres strl)
-        (toHTML/file (attribute/linelevel fstres))
-        (values (string-append "<a href=\"" (attribute/linelevel fstres) ".html\">"
+        (let ((filename (attribute/linelevel fstres)))
+          (when (not (inWorkingSet filename))
+            (begin (regWorkingSet filename)
+                   (toHTML/file filename)))
+          (values (string-append "<a href=\"" filename ".html\">"
+                                 (content/linelevel fstres)
+                                 "</a>\n")
+                  (cdr strl)))))
+    ,(mkLineLevelP/toHTML
+      "INCLUDE-RAW"
+      (λ (fstres strl)
+        (values (file->string (attribute/linelevel fstres))
+                (cdr strl))))
+    ,(mkLineLevelP/toHTML
+      "LINK-RAW"
+      (λ (fstres strl)
+        (values (string-append "<a href=\"" (attribute/linelevel fstres) "\">"
                                (content/linelevel fstres)
                                "</a>\n")
                 (cdr strl))))

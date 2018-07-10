@@ -6,9 +6,15 @@ title: Camus test file.
 end[head].
  
 body.
- 
+
+
 |REFER[a_label]. headers|<br />
 ^ click me!
+
+h1: Camus Markup Language
+
+hr.
+
  
 h1: H1 Header 
 h2: H2 Header 
@@ -16,7 +22,7 @@ h3: H3 Header
 h4: H4 Header
 h5: H5 Header
 h6: H6 Header
- 
+
 p: single line paragraph.
 p.
 multiple line
@@ -25,7 +31,7 @@ end[p].
  
 another
 multiline
-paragraph.
+paragraph\.
 
 bold test. |b|bold| |strong|strong| |i|italic| test.
  
@@ -54,7 +60,7 @@ not bold:
 
 blockquote: singleline blockquote.
 blockquote.
-multiline  blockquote\.
+multiline  blockquote.
 end[blockquote].
 
 
@@ -73,13 +79,37 @@ you just write them as usual.
 hr:  
 include test.
 
+there are 2 kind of INCLUDE:
+ul.
+li: INCLUDE[X], where X will be processed by camus.
+li: INCLUDE-RAW[X], where X will not be processed.
+
+end[ul].
+
+example\:
+
 INCLUDE[test2.cm]: This is test2.cm.
+INCLUDE-RAW[test2.cm]: This is test2.cm.
 
-LINK[test2.cm]: This is a link to test2.cm.
+hr.
+link test.
 
-|LINK[test2.cm]. this| is also a link to test2.cm.
+there are 2 kinds of LINK:
+
+ul.
+li: LINK[X], where X will be processed.
+li: LINK-RAW[X], which works as a simple &lt;a&gt; tag.
+end[ul].
+
+
+LINK[test2.cm]: This is a link to the file generated from test2.cm.
+
+|LINK[test2.cm]. this| is also a link to the file generated from test2.cm.
+
+LINK-RAW[test2.cm]: This is a link to test2.cm.
 
 hr:  
+
 
 h3: v0.1 beta 20171030: REFER and LABEL
 you might not notice them. click |REFER[top]. here|. <br />
@@ -95,6 +125,10 @@ btw you can use tags like this now:
 
 h3: this word is bold (normally), but this |i|word| is italic.
 
+hr.
+h3: v20180710: INCLUDE-RAW and LINK-RAW
+
+The looping reference bug is also fixed. check out loopref-test.cm.
 
 end[body].
 end[html].
