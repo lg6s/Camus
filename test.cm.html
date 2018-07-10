@@ -1,0 +1,180 @@
+
+<html><p>
+</p>
+
+<head><meta charset="utf-8"> </meta><title>Camus test file. </title>
+</head><p>
+</p>
+
+<body><p>
+</p>
+<p>
+<a href="#a_label">headers</a><br />
+^ click me!
+</p>
+<p>
+</p>
+<h1>Camus Markup Language</h1><p>
+</p>
+
+<hr><p>
+</p>
+<p>
+</p>
+<h1>H1 Header </h1><h2>H2 Header </h2><h3>H3 Header</h3><h4>H4 Header</h4><h5>H5 Header</h5><h6>H6 Header</h6><p>
+</p>
+<p>single line paragraph.</p>
+<p><p>
+multiple line
+paragraph
+</p>
+
+</p><p>
+another
+multiline
+paragraph.
+</p>
+<p>
+bold test. <b>bold</b> <strong>strong</strong> <i>italic</i> test.
+</p>
+<p>
+stacking test. <b> bold <strong>bold strong</strong> bold</b> <strong>strong <b>bold</b> strong</strong>.
+</p>
+<p>
+another stacking test. <i>italic <b>italic strong</b> italic</i> <strong><i>strong italic</i> strong</strong>
+</p>
+<p>
+imgtest! <img src="./test.jpg"> </img>
+</p>
+<p>
+href test! <a href="https://bctnry.github.io/"> bctnry on github</a>
+</p>
+<p>
+escaping test:
+</p>
+<h3>a h3 header</h3><p>
+h3: not a h3 header
+</p>
+<p>
+a hr:
+</p>
+
+<hr><p>
+not a hr:
+hr.
+</p>
+<p>
+a bold tag:
+<b>this is bold</b>
+</p>
+<p>
+not bold:
+|b|this is not bold|
+</p>
+<p>
+</p>
+<blockquote>singleline blockquote.</blockquote>
+<blockquote><p>
+multiline  blockquote.
+</p>
+
+</blockquote><p>
+</p>
+<p>
+force break: br<br></br>eak.
+or directly: br<br />eak.
+</p>
+<p>
+<pre>
+pre still functions as usual.
+but even in pre tag lines are affected by camus.
+e.g. <b>this</b> is still bold.
+</pre>
+</p>
+<p>
+the problem of printing &lt; and &gt;:<br />
+you just write them as usual.
+</p>
+<p>
+</p>
+<hr> </hr><p>
+include test.
+</p>
+<p>
+there are 2 kind of INCLUDE:
+</p>
+
+<ul><li>INCLUDE[X], where X will be processed by camus.</li><li>INCLUDE-RAW[X], where X will not be processed.</li><p>
+</p>
+
+</ul><p>
+example:
+</p>
+<p>
+</p>
+<h3>this is a h3 header in test2. </h3><p>
+<b>bold</b> 
+</p>
+<p>
+</p>
+h3: this is a h3 header in test2. 
+INCLUDE[test3.cm]:  This is test3.cm.
+
+<p>
+</p>
+
+<hr><p>
+link test.
+</p>
+<p>
+there are 2 kinds of LINK:
+</p>
+<p>
+</p>
+
+<ul><li>LINK[X], where X will be processed.</li><li>LINK-RAW[X], which works as a simple &lt;a&gt; tag.</li>
+</ul><p>
+</p>
+<p>
+</p>
+<a href="test2.cm.html">This is a link to the file generated from test2.cm.</a>
+<p>
+<a href="test2.cm.html">this</a> is also a link to the file generated from test2.cm.
+</p>
+<p>
+</p>
+<a href="test2.cm">This is a link to test2.cm.</a>
+<p>
+</p>
+<hr> </hr><p>
+</p>
+<p>
+</p>
+<h3>v0.1 beta 20171030: REFER and LABEL</h3><p>
+you might not notice them. click <a href="#top">here</a>. <br />
+<a name="a_label">now you're back here again.</a>
+</p>
+<p>
+you can also use them like:
+</p>
+<a name="chapter_1">Chapter 1: Basic Input/Output Functions</a>
+<p>
+and then:
+</p>
+<a href="#chapter_1">Go to the beginning of chapter 1.</a>
+<p>
+btw you can use tags like this now:
+</p>
+<p>
+</p>
+<h3>this word is bold (normally), but this <i>word</i> is italic.</h3><p>
+</p>
+
+<hr><h3>v20180710: INCLUDE-RAW and LINK-RAW</h3><p>
+The looping reference bug is also fixed. check out loopref-test.cm.
+</p>
+<p>
+</p>
+
+</body>
+</html>
