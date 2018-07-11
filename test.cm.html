@@ -1,15 +1,13 @@
-
 <html>
-<head><meta charset="utf-8"> </meta><title>Camus test file. </title>
-</head>
-<body><br /><a href="#a_label">headers</a><br />
+
+<head><meta charset="utf-8"> </meta><title>Camus test file. </title></head><body><a href="#a_label">headers</a><br />
 ^ click me!
-<br /><h1>Camus Markup Language</h1>
+<br /><h1>Camus Markup Language Test File</h1>
 <hr><h1>H1 Header </h1><h2>H2 Header </h2><h3>H3 Header</h3><h4>H4 Header</h4><h5>H5 Header</h5><h6>H6 Header</h6><br /><p>single line paragraph.</p>
 <p>multiple line
 paragraph
 
-</p>another
+<end p>another
 multiline
 paragraph.
 <br />bold test. <b>bold</b> <strong>strong</strong> <i>italic</i> test.
@@ -30,7 +28,7 @@ hr.
 <br /><blockquote>singleline blockquote.</blockquote>
 <blockquote>multiline  blockquote.
 
-</blockquote><br />force break: br<br></br>eak.
+</blockquote><br />force break: br<br />eak.
 or directly: br<br />eak.
 <br /><pre>
 pre still functions as usual.
@@ -42,8 +40,8 @@ you just write them as usual.
 <br /><br /><hr> </hr>include test.
 <br />there are 2 kind of INCLUDE:
 
-<ul><li>INCLUDE[X], where X will be processed by camus.</li><li>INCLUDE-RAW[X], where X will not be processed.</li><br />
-</ul><br />example:
+<ul><li>INCLUDE[X], where X will be processed by camus.</li><li>INCLUDE-RAW[X], where X will not be processed.</li>
+</ul>example:
 <br /><h3>this is a h3 header in test2. </h3><b>bold</b> 
 <br />h3: this is a h3 header in test2. 
 INCLUDE[test3.cm]:  This is test3.cm.
@@ -53,7 +51,7 @@ INCLUDE[test3.cm]:  This is test3.cm.
 <br />there are 2 kinds of LINK:
 <br />
 <ul><li>LINK[X], where X will be processed.</li><li>LINK-RAW[X], which works as a simple &lt;a&gt; tag.</li>
-</ul><br /><a href="test2.cm.html">This is a link to the file generated from test2.cm.</a>
+</ul><a href="test2.cm.html">This is a link to the file generated from test2.cm.</a>
 <br /><a href="test2.cm.html">this</a> is also a link to the file generated from test2.cm.
 <br /><a href="test2.cm">This is a link to test2.cm.</a>
 <br /><br />
@@ -76,5 +74,17 @@ one empty line is converted to one &lt;br /&gt;, and 2 or more than 2 empty line
 <div style="font-size:80%" id="test">block-level attribute test.
 
 </div><br />
-</body>
+<hr><h3>v20180711: block-level ESCAPE</h3>this won't be processed by camus.
+test.
+test.
+
+test.
+<br />
+<hr><h3>v20180712: HEADER, END, IMG</h3>
+<ul><li>now block-level body tag is no longer required; camus will generate <body> automatically.</li><li>the bug where |br|| generates &lt;br&gt; &lt;/br&gt; (which will be the same as two &lt;br/&gt;s) is fixed. from now on level-1 in-line tags with no content will be converted into something like &lt;TAG /&gt;.</li><li>block-level end tag is replaced with END for the sake of consistency.</li><li>IMG[X] is introduced as a shorthand of img[src="X"].</li><br />tests.
+<img src="a.jpg" />
+<br /><img src="a.jpg"></img>
+
+</ul><br />
 </html>
+

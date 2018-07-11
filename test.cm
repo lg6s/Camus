@@ -1,14 +1,13 @@
-html.
-head.
+
+HEADER.
 meta[charset="utf-8"]:  
 title: Camus test file. 
-end[head].
-body.
+END[HEADER].
 
 |REFER[a_label]. headers|<br />
 ^ click me!
 
-h1: Camus Markup Language
+h1: Camus Markup Language Test File
 hr.
 h1: H1 Header 
 h2: H2 Header 
@@ -54,7 +53,7 @@ not bold:
 blockquote: singleline blockquote.
 blockquote.
 multiline  blockquote.
-end[blockquote].
+END[blockquote].
 
 force break: br|br||eak.
 or directly: br<br />eak.
@@ -75,9 +74,7 @@ there are 2 kind of INCLUDE:
 ul.
 li: INCLUDE[X], where X will be processed by camus.
 li: INCLUDE-RAW[X], where X will not be processed.
-
-end[ul].
-
+END[ul].
 example\:
 
 INCLUDE[test2.cm]: This is test2.cm.
@@ -91,8 +88,7 @@ there are 2 kinds of LINK:
 ul.
 li: LINK[X], where X will be processed.
 li: LINK-RAW[X], which works as a simple &lt;a&gt; tag.
-end[ul].
-
+END[ul].
 LINK[test2.cm]: This is a link to the file generated from test2.cm.
 
 |LINK[test2.cm]. this| is also a link to the file generated from test2.cm.
@@ -122,13 +118,35 @@ li: The looping reference bug is also fixed. check out loopref-test.cm.
 li.
 The rules for empty lines has also changed: there will be no implicit &lt;p&gt; tags,
 one empty line is converted to one &lt;br /&gt;, and 2 or more than 2 empty lines are converted to two br tags.
-end[li].
+END[li].
 li: block-level attributes are now supported.
-end[ul].
+END[ul].
 block-level tag attributes.
 div[style="font-size:80%",id="test"].
 block-level attribute test.
-end[div].
+END[div].
 
-end[body].
-end[html].
+hr.
+h3: v20180711: block-level ESCAPE
+ESCAPE.
+this won't be processed by camus.
+test.
+test.
+
+test.
+END[ESCAPE].
+
+hr.
+h3: v20180712: HEADER, END, IMG
+ul.
+li: now block-level body tag is no longer required; camus will generate <body> automatically.
+li: the bug where \|br\|\| generates &lt;br&gt; &lt;/br&gt; (which will be the same as two &lt;br/&gt;s) is fixed. from now on level-1 in-line tags with no content will be converted into something like &lt;TAG /&gt;.
+li: block-level end tag is replaced with END for the sake of consistency.
+li: IMG[X] is introduced as a shorthand of img[src="X"].
+
+tests\.
+IMG[a.jpg]: 
+
+|IMG[a.jpg]. |
+END[ul].
+

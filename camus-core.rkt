@@ -18,6 +18,21 @@
 
 |#
 
+;; v20180711: no explicit block-level <html> & <body> tag anymore.
+(define *html-result-header* "<html>\n")
+(define *html-result-footer* "</html>\n")
+;; v20180712: HEADER
+;; block-level HEADER tags should:
+;; 1. only occur once.
+;; 2. be the first block-level tag of the document.
+;; the empty lines before & after HEADER is ignored.
+(define *header-done?* #f)
+(define *first-body-tag-done?* #f)
+;; v20180711: ESCAPE
+(define *process-flag* #t)
+(define (do-not-process) (set! *process-flag* #f))
+(define (process) (set! *process-flag* #t))
+
 ;; this is to prevent loops.
 (define *working-set* '())
 (define (inWorkingSet filename)
@@ -75,6 +90,12 @@
                  (toHTML/inline (content/linelevel fstres))
                  "</a>\n")
                 (cdr strl))))
+    ,(mkLineLevelP/toHTML
+      "IMG"
+      (λ (fstres strl)
+        (values (string-append
+                 "<img src=\"" (attribute/linelevel fstres) "\" />\n")
+                (cdr strl))))
     ,(mkLineLevelP/toHTML 'DEFAULT
       (λ (fstres strl)
         (values (toHTML/linelevel (car fstres))
@@ -107,6 +128,11 @@
       (λ (fstres tagstack)
         (values (string-append "<a name=\"" (attribute/inline1 fstres) "\">")
                 (cons "a" tagstack))))
+    ,(mkInlineP/toHTML
+      "IMG"
+      (λ (fstres tagstack)
+        (values (string-append "<img src=\"" (attribute/inline1 fstres) "\">")
+                (cons "img" tagstack))))
     ,(mkInlineP/toHTML 'DEFAULT
       (λ (fstres tagstack)
         (values (string-append "<" (tagname/inline1 fstres)
@@ -191,9 +217,26 @@
   (let* ((tagname (tagname/blocklevel fstres))
          (attribute (attribute/blocklevel fstres))
          (tagname_esc (toHTML/escape tagname)))
-    (if (string=? tagname "end")
-        (string-append "\n</" (if attribute (toHTML/escape attribute) "") ">")
-        (string-append "\n<" tagname_esc (toHTML/attribute attribute) ">"))))
+    (cond
+      ((string=? tagname "END")
+       (if attribute
+           (cond
+             ((string=? attribute "HEADER")
+              (begin (set! *header-done?* #t) "</head><body>"))
+             (else
+              (begin (when (and (not *first-body-tag-done?*) *header-done?*) (set! *first-body-tag-done?* #t))
+                     (string-append "\n</" (if attribute (toHTML/escape attribute) "") ">"))))
+           (begin (display "WARNING: invalid END tag. ignoring.\n" (current-error-port)) "")))
+      ((string=? tagname "ESCAPE")
+       (begin (do-not-process) ""))
+      ((string=? tagname "HEADER")
+       (if *header-done?*
+           (begin (display "WARNING: invalid HEADER position. ignoring.\n" (current-error-port))
+                  "")
+           "<head>"))
+      (else
+       (begin (when (and (not *first-body-tag-done?*) *header-done?*) (set! *first-body-tag-done?* #t))
+              (string-append "\n<" tagname_esc (toHTML/attribute attribute) ">"))))))
 (define (toHTML/blocklevel str)
   (let ((parse-result (regexp-match blockLevelRegexp str)))
     (if parse-result
@@ -201,7 +244,7 @@
         #f)))
 
 
-; ---------------------------------------------------
+;;; toHTML/inline ------------------------------------------------------
 
 (define (toHTML/inlinep tagn)
   (let ((assocres (getinlinep/toHTML tagn)))
@@ -223,19 +266,21 @@
                           (content (content/inline2 inline2match)))
                       (toHTML/inline_i
                        (substring str (length/inline2 inline2match))
-                       (string-append res "<" tagname ">" content "</" tagname ">")
+                       (if (string=? content "")
+                           (string-append res "<" tagname " />")
+                           (string-append res "<" tagname ">" content "</" tagname ">"))
                        tagstack)))
                    (inline1match
                     ((toHTML/inlinep (tagname/inline1 inline1match))
                      inline1match str res tagstack))
                    (else
-                         (toHTML/inline_i
-                          (substring str 1)
-                          (string-append
-                           res
-                           (if (null? tagstack) "|"
-                               (string-append "</" (car tagstack) ">")))
-                          (if (null? tagstack) tagstack (cdr tagstack)))))))
+                    (toHTML/inline_i
+                     (substring str 1)
+                     (string-append
+                      res
+                      (if (null? tagstack) "|"
+                          (string-append "</" (car tagstack) ">")))
+                     (if (null? tagstack) tagstack (cdr tagstack)))))))
           (else
                 (toHTML/inline_i
                  (substring str 1)
@@ -261,24 +306,52 @@
       (let ([fst (car strl)] [rst (cdr strl)])
         (let ([fstres/blocklevel_r (regexp-match blockLevelRegexp fst)]
               [fstres/linelevel_r (regexp-match lineLevelRegexp fst)])
-          (cond
-            (fstres/blocklevel_r
-             (toHTML/strlist_k rst (appendstr/k (toHTML/blocklevel_r fstres/blocklevel_r) k)))
-            (fstres/linelevel_r
-             ((toHTML/linelevelp (tagname/linelevel fstres/linelevel_r)) 
-              fstres/linelevel_r strl k))
-            ((empty?/string fst)
-             (let-values (((empty-lines rst) (splitf-at strl empty?/string)))
-               (toHTML/strlist_k rst (appendstr/k (if (= 1 (length empty-lines)) "<br />" "<br /><br />") k))))
-            (else
-             (toHTML/strlist_k
-              rst
-              (appendstr/k (string-append (toHTML/inline fst) "\n") k))))))))
+          (if fstres/blocklevel_r
+              ;; block-level.
+              ;; v20180711: ESCAPE is ended with block level tag so every block level
+              ;; tag should be checked to see if there's an end tag.
+              (if (and (string=? "END" (tagname/blocklevel fstres/blocklevel_r))
+                       (string=? "ESCAPE" (attribute/blocklevel fstres/blocklevel_r)))
+                  ;; ESCAPE. and end[ESCAPE]. does not map to any HTML tags.
+                  (begin (process) (toHTML/strlist_k rst k))
+                  (toHTML/strlist_k rst (appendstr/k
+                                         (if *process-flag*
+                                             (toHTML/blocklevel_r fstres/blocklevel_r)
+                                             (string-append fst "\n"))
+                                         k)))
+              ;; line-level.
+              (begin
+                (if *process-flag*
+                    (cond
+                      ;; line-level tag detected.
+                      (fstres/linelevel_r
+                       (begin (when (and *header-done?* (not *first-body-tag-done?*))
+                                (set! *first-body-tag-done?* #t))
+                              ((toHTML/linelevelp (tagname/linelevel fstres/linelevel_r)) 
+                               fstres/linelevel_r strl k)))
+                      ((empty?/string fst)
+                       (let-values (((empty-lines rst) (splitf-at strl empty?/string)))
+                         (cond
+                           ((or (not *header-done?*) (not *first-body-tag-done?*))
+                            (toHTML/strlist_k rst k)) ;; ignored.
+                           (else
+                            (toHTML/strlist_k rst (appendstr/k (if (= 1 (length empty-lines)) "<br />" "<br /><br />") k))))))
+                      (else
+                       ;; normal text.
+                       (begin (when (and *header-done?* (not *first-body-tag-done?*))
+                                (set! *first-body-tag-done?* #t))
+                              (toHTML/strlist_k
+                               rst
+                               (appendstr/k (string-append (toHTML/inline fst) "\n") k)))))
+                    (toHTML/strlist_k rst (appendstr/k (string-append fst "\n") k)))))))))
 (define (toHTML str)
   (toHTML/strlist_k (string-split str "\n") (λ (x) x)))
 (define (toHTML/file filename)
   (let ((outputfilename (string-append filename ".html"))
         (filecontent (file->string filename)))
     (with-output-to-file outputfilename
-      (λ () (displayln (toHTML filecontent)))
+      (λ ()
+        (displayln *html-result-header*)
+        (displayln (toHTML filecontent))
+        (displayln *html-result-footer*))
       #:exists 'replace)))
