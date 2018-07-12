@@ -20,7 +20,7 @@
 
 ;; v20180711: no explicit block-level <html> & <body> tag anymore.
 (define *html-result-header* "<html>\n")
-(define *html-result-footer* "</html>\n")
+(define *html-result-footer* "</body></html>\n")
 ;; v20180712: HEADER
 ;; block-level HEADER tags should:
 ;; 1. only occur once.
