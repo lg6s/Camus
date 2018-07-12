@@ -7,7 +7,7 @@
 <p>multiple line
 paragraph
 
-<end p>another
+</p>another
 multiline
 paragraph.
 <br />bold test. <b>bold</b> <strong>strong</strong> <i>italic</i> test.
@@ -81,10 +81,11 @@ test.
 test.
 <br />
 <hr><h3>v20180712: HEADER, END, IMG</h3>
-<ul><li>now block-level body tag is no longer required; camus will generate <body> automatically.</li><li>the bug where |br|| generates &lt;br&gt; &lt;/br&gt; (which will be the same as two &lt;br/&gt;s) is fixed. from now on level-1 in-line tags with no content will be converted into something like &lt;TAG /&gt;.</li><li>block-level end tag is replaced with END for the sake of consistency.</li><li>IMG[X] is introduced as a shorthand of img[src="X"].</li><br />tests.
+<ul><li>now block-level body tag is no longer required; camus will generate <body> automatically.</li><li>the bug where |br|| generates &lt;br&gt; &lt;/br&gt; (which will be the same as two &lt;br/&gt;s) is fixed. from now on level-1 in-line tags with no content will be converted into something like &lt;TAG /&gt;.</li><li>block-level end tag is replaced with END for the sake of consistency.</li><li>IMG[X] is introduced as a shorthand of img[src="X"].</li><li>IMG is now also a type-2 in-line tag.</li>
+</ul><br />tests.
 <img src="a.jpg" />
-<br /><img src="a.jpg"></img>
+<img src="a.jpg"></img>
+<img src="a.jpg" />
 
-</ul><br />
 </html>
 

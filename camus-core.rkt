@@ -105,43 +105,6 @@
   (assoc tagn linelevelp/toHTML))
 
 
-(define (mkInlineP/toHTML name f)
-  (cons name
-        (λ (fstres str res tagstack)
-          (let-values (((result nexttagstack) (f fstres tagstack)))
-            (toHTML/inline_i
-             (substring str (length/inline1 fstres))
-             (string-append res result)
-             nexttagstack)))))
-(define inlinep/toHTML
-  `(
-    ,(mkInlineP/toHTML "LINK"
-      (λ (fstres tagstack)
-        (toHTML/file (attribute/inline1 fstres))
-        (values (string-append "<a href=\"" (attribute/inline1 fstres) ".html\">")
-                (cons "a" tagstack))))
-    ,(mkInlineP/toHTML "REFER"
-      (λ (fstres tagstack)
-        (values (string-append "<a href=\"#" (attribute/inline1 fstres) "\">")
-                (cons "a" tagstack))))
-    ,(mkInlineP/toHTML "LABEL"
-      (λ (fstres tagstack)
-        (values (string-append "<a name=\"" (attribute/inline1 fstres) "\">")
-                (cons "a" tagstack))))
-    ,(mkInlineP/toHTML
-      "IMG"
-      (λ (fstres tagstack)
-        (values (string-append "<img src=\"" (attribute/inline1 fstres) "\">")
-                (cons "img" tagstack))))
-    ,(mkInlineP/toHTML 'DEFAULT
-      (λ (fstres tagstack)
-        (values (string-append "<" (tagname/inline1 fstres)
-                               (toHTML/attribute (attribute/inline1 fstres)) ">")
-                (cons (tagname/inline1 fstres) tagstack))))
-    ))
-(define (getinlinep/toHTML tagn)
-  (assoc tagn inlinep/toHTML))
-
 ;  --------------------------------------------------------------------------
 
 (define normalTextRegexp_r "(?:[^][:\\\\.]|\\\\\\[|\\\\\\]|\\\\\\:|\\\\\\.)")
@@ -246,9 +209,68 @@
 
 ;;; toHTML/inline ------------------------------------------------------
 
+(define (mkInlineP/toHTML name f)
+  (cons name
+        (λ (fstres str res tagstack)
+          (let-values (((result nexttagstack) (f fstres tagstack)))
+            (toHTML/inline_i
+             (substring str (length/inline1 fstres))
+             (string-append res result)
+             nexttagstack)))))
+(define inlinep/toHTML
+  `(
+    ,(mkInlineP/toHTML "LINK"
+      (λ (fstres tagstack)
+        (toHTML/file (attribute/inline1 fstres))
+        (values (string-append "<a href=\"" (attribute/inline1 fstres) ".html\">")
+                (cons "a" tagstack))))
+    ,(mkInlineP/toHTML "REFER"
+      (λ (fstres tagstack)
+        (values (string-append "<a href=\"#" (attribute/inline1 fstres) "\">")
+                (cons "a" tagstack))))
+    ,(mkInlineP/toHTML "LABEL"
+      (λ (fstres tagstack)
+        (values (string-append "<a name=\"" (attribute/inline1 fstres) "\">")
+                (cons "a" tagstack))))
+    ,(mkInlineP/toHTML
+      "IMG"
+      (λ (fstres tagstack)
+        (values (string-append "<img src=\"" (attribute/inline1 fstres) "\">")
+                (cons "img" tagstack))))
+    ,(mkInlineP/toHTML 'DEFAULT
+      (λ (fstres tagstack)
+        (values (string-append "<" (tagname/inline1 fstres)
+                               (toHTML/attribute (attribute/inline1 fstres)) ">")
+                (cons (tagname/inline1 fstres) tagstack))))
+    ))
+(define (getinlinep/toHTML tagn)
+  (assoc tagn inlinep/toHTML))
+
+;; v20180712: type-2 inline tags.
+;; tagname * conent -> string.
+(define (mkInline2P/toHTML tagname f)
+  (cons tagname f))
+(define inline2p/toHTML
+  `(
+    ,(mkInline2P/toHTML
+      "IMG"
+      (λ (tagname content)
+        (string-append "<img src=\"" content "\" />")))
+    ,(mkInline2P/toHTML
+      'DEFAULT
+      (λ (tagname content)
+        (if (string=? "" content)
+            (string-append "<" tagname " />")
+            (string-append "<" tagname ">" content "</" tagname ">"))))))
+(define (getinline2p/toHTML tagn)
+  (assoc tagn inline2p/toHTML))
+
 (define (toHTML/inlinep tagn)
   (let ((assocres (getinlinep/toHTML tagn)))
     (if assocres (cdr assocres) (cdr (getinlinep/toHTML 'DEFAULT)))))
+(define (toHTML/inline2p tagn)
+  (let ((assocres (getinline2p/toHTML tagn)))
+    (if assocres (cdr assocres) (cdr (getinline2p/toHTML 'DEFAULT)))))
 
 (define (toHTML/inline_i str res tagstack)
   (if (string=? str "") res
@@ -261,26 +283,28 @@
           ((#\|)
            (let ((inline2match (regexp-match inline2Regexp str))
                  (inline1match (regexp-match inline1Regexp str)))
-             (cond (inline2match
-                    (let ((tagname (tagname/inline2 inline2match))
-                          (content (content/inline2 inline2match)))
-                      (toHTML/inline_i
-                       (substring str (length/inline2 inline2match))
-                       (if (string=? content "")
-                           (string-append res "<" tagname " />")
-                           (string-append res "<" tagname ">" content "</" tagname ">"))
-                       tagstack)))
-                   (inline1match
-                    ((toHTML/inlinep (tagname/inline1 inline1match))
-                     inline1match str res tagstack))
-                   (else
-                    (toHTML/inline_i
-                     (substring str 1)
-                     (string-append
-                      res
-                      (if (null? tagstack) "|"
-                          (string-append "</" (car tagstack) ">")))
-                     (if (null? tagstack) tagstack (cdr tagstack)))))))
+             (cond
+               ;; inline type 2: |TAG|content|
+               (inline2match
+                (let ((tagname (tagname/inline2 inline2match))
+                      (content (content/inline2 inline2match)))
+                  ;; v20180712: CAMUS tags for inline type 2.
+                  (toHTML/inline_i
+                   (substring str (length/inline2 inline2match))
+                   (string-append res ((toHTML/inline2p (tagname/inline2 inline2match)) tagname content))
+                   tagstack)))
+               ;; inline type 1: |TAG[ATTR]. content|
+               (inline1match
+                ((toHTML/inlinep (tagname/inline1 inline1match))
+                 inline1match str res tagstack))
+               (else
+                (toHTML/inline_i
+                 (substring str 1)
+                 (string-append
+                  res
+                  (if (null? tagstack) "|"
+                      (string-append "</" (car tagstack) ">")))
+                 (if (null? tagstack) tagstack (cdr tagstack)))))))
           (else
                 (toHTML/inline_i
                  (substring str 1)

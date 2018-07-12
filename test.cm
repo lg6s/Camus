@@ -20,7 +20,7 @@ p: single line paragraph.
 p.
 multiple line
 paragraph
-end[p].
+END[p].
 another
 multiline
 paragraph\.
@@ -143,10 +143,10 @@ li: now block-level body tag is no longer required; camus will generate <body> a
 li: the bug where \|br\|\| generates &lt;br&gt; &lt;/br&gt; (which will be the same as two &lt;br/&gt;s) is fixed. from now on level-1 in-line tags with no content will be converted into something like &lt;TAG /&gt;.
 li: block-level end tag is replaced with END for the sake of consistency.
 li: IMG[X] is introduced as a shorthand of img[src="X"].
+li: IMG is now also a type-2 in-line tag.
+END[ul].
 
 tests\.
 IMG[a.jpg]: 
-
 |IMG[a.jpg]. |
-END[ul].
-
+|IMG|a.jpg|
